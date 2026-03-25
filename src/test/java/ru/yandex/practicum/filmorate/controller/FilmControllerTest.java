@@ -19,14 +19,12 @@ class FilmControllerTest {
     @Test
     @DisplayName("POST /films should return 400 when film name is blank")
     void shouldReturnBadRequestWhenFilmNameIsBlank() throws Exception {
-        String json = """
-                {
-                  "name": "",
-                  "description": "Good description",
-                  "releaseDate": "2000-01-01",
-                  "duration": 120
-                }
-                """;
+        String json = "{\n" +
+                "  \"name\": \"\",\n" +
+                "  \"description\": \"Good description\",\n" +
+                "  \"releaseDate\": \"2000-01-01\",\n" +
+                "  \"duration\": 120\n" +
+                "}";
 
         mockMvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -40,14 +38,12 @@ class FilmControllerTest {
     void shouldReturnBadRequestWhenDescriptionIsTooLong() throws Exception {
         String longDescription = "a".repeat(201);
 
-        String json = """
-            {
-              "name": "Film",
-              "description": "%s",
-              "releaseDate": "2000-01-01",
-              "duration": 120
-            }
-            """.formatted(longDescription);
+        String json = "{\n" +
+                "  \"name\": \"Film\",\n" +
+                "  \"description\": \"" + longDescription + "\",\n" +
+                "  \"releaseDate\": \"2000-01-01\",\n" +
+                "  \"duration\": 120\n" +
+                "}";
 
         mockMvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -59,14 +55,12 @@ class FilmControllerTest {
     @Test
     @DisplayName("POST /films should return 400 when release date is before 1895-12-28")
     void shouldReturnBadRequestWhenReleaseDateIsTooEarly() throws Exception {
-        String json = """
-            {
-              "name": "Film",
-              "description": "Good description",
-              "releaseDate": "1895-12-27",
-              "duration": 120
-            }
-            """;
+        String json = "{\n" +
+                "  \"name\": \"Film\",\n" +
+                "  \"description\": \"Good description\",\n" +
+                "  \"releaseDate\": \"1895-12-27\",\n" +
+                "  \"duration\": 120\n" +
+                "}";
 
         mockMvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -78,14 +72,12 @@ class FilmControllerTest {
     @Test
     @DisplayName("POST /films should return 400 when duration is not positive")
     void shouldReturnBadRequestWhenDurationIsNotPositive() throws Exception {
-        String json = """
-            {
-              "name": "Film",
-              "description": "Good description",
-              "releaseDate": "2000-01-01",
-              "duration": 0
-            }
-            """;
+        String json = "{\n" +
+                "  \"name\": \"Film\",\n" +
+                "  \"description\": \"Good description\",\n" +
+                "  \"releaseDate\": \"2000-01-01\",\n" +
+                "  \"duration\": 0\n" +
+                "}";
 
         mockMvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -97,14 +89,12 @@ class FilmControllerTest {
     @Test
     @DisplayName("POST /films should return 200 and created film when request is valid")
     void shouldCreateFilmWhenRequestIsValid() throws Exception {
-        String json = """
-            {
-              "name": "Inception",
-              "description": "Dreams inside dreams",
-              "releaseDate": "2010-07-16",
-              "duration": 148
-            }
-            """;
+        String json = "{\n" +
+                "  \"name\": \"Inception\",\n" +
+                "  \"description\": \"Dreams inside dreams\",\n" +
+                "  \"releaseDate\": \"2010-07-16\",\n" +
+                "  \"duration\": 148\n" +
+                "}";
 
         mockMvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
