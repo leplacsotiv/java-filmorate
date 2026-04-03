@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import ru.yandex.practicum.filmorate.validation.MinReleaseDate;
+import ru.yandex.practicum.filmorate.validation.UpdateValidationGroup;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -14,6 +15,7 @@ import java.util.Set;
 @Data
 public class Film {
 
+    @NotNull(message = "Film id must not be null", groups = UpdateValidationGroup.class)
     private Integer id;
 
     @NotBlank(message = "Film name must not be blank")

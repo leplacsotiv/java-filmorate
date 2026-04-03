@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -14,16 +14,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class FilmService {
 
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
-
-    @Autowired
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
-        this.filmStorage = filmStorage;
-        this.userStorage = userStorage;
-    }
 
     public Collection<Film> getFilms() {
         return filmStorage.findAll();
@@ -34,9 +29,6 @@ public class FilmService {
     }
 
     public Film updateFilm(Film film) {
-        if (film.getId() == null) {
-            throw new ValidationException("Film id must not be null");
-        }
 
         if (!filmStorage.existsById(film.getId())) {
             throw new NotFoundException("Film with id=" + film.getId() + " not found");
