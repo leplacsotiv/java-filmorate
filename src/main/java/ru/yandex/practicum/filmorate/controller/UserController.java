@@ -1,63 +1,81 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.validation.UpdateValidationGroup;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 @Slf4j
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
 public class UserController {
 
-    private final Map<Integer, User> users = new HashMap<>();
-    private int nextId = 1;
+    private final UserService userService;
 
     @GetMapping
     public Collection<User> getUsers() {
-        return users.values();
+        return userService.getUsers();
+    }
+
+    @GetMapping("/{id}")
+    public User getUserById(@PathVariable Integer id) {
+        User user = userService.getUserById(id);
+        log.info("Received user by id={}", id);
+        return user;
     }
 
     @PostMapping
     public User createUser(@Valid @RequestBody User user) {
-        prepareUserName(user);
-
-        user.setId(nextId++);
-        users.put(user.getId(), user);
-
-        log.info("Created user: {}", user);
-        return user;
+        User createdUser = userService.createUser(user);
+        log.info("Created user: {}", createdUser);
+        return createdUser;
     }
 
     @PutMapping
-    public User updateUser(@Valid @RequestBody User user) {
-        prepareUserName(user);
-
-        if (user.getId() == null) {
-            log.warn("Validation failed: user id is null");
-            throw new ValidationException("User id must not be null");
-        }
-
-        if (!users.containsKey(user.getId())) {
-            log.warn("Update failed: user with id={} not found", user.getId());
-            throw new NotFoundException("User with id=" + user.getId() + " not found");
-        }
-
-        users.put(user.getId(), user);
-
-        log.info("Updated user: {}", user);
-        return user;
+    public User updateUser(@Validated(UpdateValidationGroup.class) @RequestBody User user) {
+        User updatedUser = userService.updateUser(user);
+        log.info("Updated user: {}", updatedUser);
+        return updatedUser;
     }
 
-    private void prepareUserName(User user) {
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
+    @PutMapping("/{id}/friends/{friendId}")
+    public void addFriend(@PathVariable Integer id, @PathVariable Integer friendId) {
+        userService.addFriend(id, friendId);
+        log.info("User with id={} added friend with id={}", id, friendId);
+    }
+
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public void removeFriend(@PathVariable Integer id, @PathVariable Integer friendId) {
+        userService.removeFriend(id, friendId);
+        log.info("User with id={} removed friend with id={}", id, friendId);
+    }
+
+    @GetMapping("/{id}/friends")
+    public List<User> getFriends(@PathVariable Integer id) {
+        List<User> friends = userService.getFriends(id);
+        log.info("Received friends list for user id={}", id);
+        return friends;
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public List<User> getCommonFriends(@PathVariable Integer id, @PathVariable Integer otherId) {
+        List<User> commonFriends = userService.getCommonFriends(id, otherId);
+        log.info("Received common friends for users id={} and id={}", id, otherId);
+        return commonFriends;
     }
 }

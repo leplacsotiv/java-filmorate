@@ -6,8 +6,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import java.time.LocalDate;
+import java.util.List;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(FilmController.class)
@@ -15,6 +23,101 @@ class FilmControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private FilmService filmService;
+
+    @Test
+    @DisplayName("PUT /films/{id}/like/{userId} should return 200 when film and user exist")
+    void shouldAddLikeWhenFilmAndUserExist() throws Exception {
+        doNothing().when(filmService).addLike(1, 2);
+
+        mockMvc.perform(put("/films/1/like/2"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("PUT /films/{id}/like/{userId} should return 404 when user does not exist")
+    void shouldReturnNotFoundWhenUserDoesNotExistForLike() throws Exception {
+        doThrow(new NotFoundException("User with id=999 not found"))
+                .when(filmService).addLike(1, 999);
+
+        mockMvc.perform(put("/films/1/like/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("User with id=999 not found"));
+    }
+
+    @Test
+    @DisplayName("DELETE /films/{id}/like/{userId} should return 200 when film and user exist")
+    void shouldRemoveLikeWhenFilmAndUserExist() throws Exception {
+        doNothing().when(filmService).removeLike(1, 2);
+
+        mockMvc.perform(delete("/films/1/like/2"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("GET /films/popular?count={count} should return 200 and popular films list")
+    void shouldReturnPopularFilmsWithCustomCount() throws Exception {
+        Film film = new Film();
+        film.setId(1);
+        film.setName("Inception");
+        film.setDescription("Dreams inside dreams");
+        film.setReleaseDate(LocalDate.of(2010, 7, 16));
+        film.setDuration(148);
+
+        when(filmService.getPopularFilms(5)).thenReturn(List.of(film));
+
+        mockMvc.perform(get("/films/popular?count=5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].name").value("Inception"))
+                .andExpect(jsonPath("$[0].description").value("Dreams inside dreams"))
+                .andExpect(jsonPath("$[0].releaseDate").value("2010-07-16"))
+                .andExpect(jsonPath("$[0].duration").value(148));
+    }
+
+    @Test
+    @DisplayName("GET /films/popular should use default count=10")
+    void shouldUseDefaultCountForPopularFilms() throws Exception {
+        when(filmService.getPopularFilms(10)).thenReturn(List.of());
+
+        mockMvc.perform(get("/films/popular"))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
+    }
+
+    @Test
+    @DisplayName("GET /films/{id} should return 200 and film when film exists")
+    void shouldReturnFilmByIdWhenFilmExists() throws Exception {
+        Film film = new Film();
+        film.setId(1);
+        film.setName("Inception");
+        film.setDescription("Dreams inside dreams");
+        film.setReleaseDate(java.time.LocalDate.of(2010, 7, 16));
+        film.setDuration(148);
+
+        when(filmService.getFilmById(1)).thenReturn(film);
+
+        mockMvc.perform(get("/films/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name").value("Inception"))
+                .andExpect(jsonPath("$.description").value("Dreams inside dreams"))
+                .andExpect(jsonPath("$.releaseDate").value("2010-07-16"))
+                .andExpect(jsonPath("$.duration").value(148));
+    }
+
+    @Test
+    @DisplayName("GET /films/{id} should return 404 when film does not exist")
+    void shouldReturnNotFoundWhenFilmDoesNotExist() throws Exception {
+        when(filmService.getFilmById(999))
+                .thenThrow(new ru.yandex.practicum.filmorate.exception.NotFoundException("Film with id=999 not found"));
+
+        mockMvc.perform(get("/films/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Film with id=999 not found"));
+    }
 
     @Test
     @DisplayName("POST /films should return 400 when film name is blank")
@@ -95,6 +198,15 @@ class FilmControllerTest {
                 "  \"releaseDate\": \"2010-07-16\",\n" +
                 "  \"duration\": 148\n" +
                 "}";
+
+        Film createdFilm = new Film();
+        createdFilm.setId(1);
+        createdFilm.setName("Inception");
+        createdFilm.setDescription("Dreams inside dreams");
+        createdFilm.setReleaseDate(LocalDate.of(2010, 7, 16));
+        createdFilm.setDuration(148);
+
+        when(filmService.createFilm(any(Film.class))).thenReturn(createdFilm);
 
         mockMvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
