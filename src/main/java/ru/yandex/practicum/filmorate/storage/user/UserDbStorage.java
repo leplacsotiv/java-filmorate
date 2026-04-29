@@ -127,13 +127,14 @@ public class UserDbStorage implements UserStorage {
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, id);
         return count != null && count > 0;
     }
+    
     @Override
     public void addFriend(Integer userId, Integer friendId) {
         String sql = """
-            MERGE INTO friendships (user_id, friend_id, status_id)
-            KEY (user_id, friend_id)
-            VALUES (?, ?, 1)
-            """;
+                MERGE INTO friendships (user_id, friend_id, status_id)
+                KEY (user_id, friend_id)
+                VALUES (?, ?, 1)
+                """;
 
         jdbcTemplate.update(sql, userId, friendId);
     }
@@ -141,10 +142,10 @@ public class UserDbStorage implements UserStorage {
     @Override
     public void removeFriend(Integer userId, Integer friendId) {
         String sql = """
-            DELETE FROM friendships
-            WHERE user_id = ?
-              AND friend_id = ?
-            """;
+                DELETE FROM friendships
+                WHERE user_id = ?
+                  AND friend_id = ?
+                """;
 
         jdbcTemplate.update(sql, userId, friendId);
     }
@@ -152,17 +153,17 @@ public class UserDbStorage implements UserStorage {
     @Override
     public List<User> getFriends(Integer userId) {
         String sql = """
-            SELECT 
-                u.user_id,
-                u.email,
-                u.login,
-                u.name,
-                u.birthday
-            FROM users AS u
-            JOIN friendships AS f ON u.user_id = f.friend_id
-            WHERE f.user_id = ?
-            ORDER BY u.user_id
-            """;
+                SELECT
+                    u.user_id,
+                    u.email,
+                    u.login,
+                    u.name,
+                    u.birthday
+                FROM users AS u
+                JOIN friendships AS f ON u.user_id = f.friend_id
+                WHERE f.user_id = ?
+                ORDER BY u.user_id
+                """;
 
         return jdbcTemplate.query(sql, userRowMapper, userId);
     }
@@ -170,19 +171,19 @@ public class UserDbStorage implements UserStorage {
     @Override
     public List<User> getCommonFriends(Integer userId, Integer otherId) {
         String sql = """
-            SELECT 
-                u.user_id,
-                u.email,
-                u.login,
-                u.name,
-                u.birthday
-            FROM users AS u
-            JOIN friendships AS f1 ON u.user_id = f1.friend_id
-            JOIN friendships AS f2 ON u.user_id = f2.friend_id
-            WHERE f1.user_id = ?
-              AND f2.user_id = ?
-            ORDER BY u.user_id
-            """;
+                SELECT
+                    u.user_id,
+                    u.email,
+                    u.login,
+                    u.name,
+                    u.birthday
+                FROM users AS u
+                JOIN friendships AS f1 ON u.user_id = f1.friend_id
+                JOIN friendships AS f2 ON u.user_id = f2.friend_id
+                WHERE f1.user_id = ?
+                  AND f2.user_id = ?
+                ORDER BY u.user_id
+                """;
 
         return jdbcTemplate.query(sql, userRowMapper, userId, otherId);
     }
