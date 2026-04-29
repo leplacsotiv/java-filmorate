@@ -44,3 +44,7 @@ build/
 
 *.db
 db/*
+
+db/
+*.mv.db
+*.trace.db

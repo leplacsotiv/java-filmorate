@@ -8,7 +8,6 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,37 +45,47 @@ public class UserService {
     }
 
     public void addFriend(Integer id, Integer friendId) {
-        User user = getUserById(id);
-        User friend = getUserById(friendId);
+        if (!userStorage.existsById(id)) {
+            throw new NotFoundException("User with id=" + id + " not found");
+        }
 
-        user.getFriends().add(friendId);
-        friend.getFriends().add(id);
+        if (!userStorage.existsById(friendId)) {
+            throw new NotFoundException("User with id=" + friendId + " not found");
+        }
+
+        userStorage.addFriend(id, friendId);
     }
 
     public void removeFriend(Integer id, Integer friendId) {
-        User user = getUserById(id);
-        User friend = getUserById(friendId);
+        if (!userStorage.existsById(id)) {
+            throw new NotFoundException("User with id=" + id + " not found");
+        }
 
-        user.getFriends().remove(friendId);
-        friend.getFriends().remove(id);
+        if (!userStorage.existsById(friendId)) {
+            throw new NotFoundException("User with id=" + friendId + " not found");
+        }
+
+        userStorage.removeFriend(id, friendId);
     }
 
     public List<User> getFriends(Integer id) {
-        User user = getUserById(id);
+        if (!userStorage.existsById(id)) {
+            throw new NotFoundException("User with id=" + id + " not found");
+        }
 
-        return user.getFriends().stream()
-                .map(this::getUserById)
-                .collect(Collectors.toList());
+        return userStorage.getFriends(id);
     }
 
     public List<User> getCommonFriends(Integer id, Integer otherId) {
-        User user = getUserById(id);
-        User otherUser = getUserById(otherId);
+        if (!userStorage.existsById(id)) {
+            throw new NotFoundException("User with id=" + id + " not found");
+        }
 
-        return user.getFriends().stream()
-                .filter(otherUser.getFriends()::contains)
-                .map(this::getUserById)
-                .collect(Collectors.toList());
+        if (!userStorage.existsById(otherId)) {
+            throw new NotFoundException("User with id=" + otherId + " not found");
+        }
+
+        return userStorage.getCommonFriends(id, otherId);
     }
 
     private void prepareUserName(User user) {

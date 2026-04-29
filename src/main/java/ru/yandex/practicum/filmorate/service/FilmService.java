@@ -3,14 +3,16 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
+import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -18,21 +20,24 @@ public class FilmService {
 
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
+    private final GenreStorage genreStorage;
+    private final MpaStorage mpaStorage;
 
     public Collection<Film> getFilms() {
         return filmStorage.findAll();
     }
 
     public Film createFilm(Film film) {
+        validateFilmReferences(film);
         return filmStorage.create(film);
     }
 
     public Film updateFilm(Film film) {
-
         if (!filmStorage.existsById(film.getId())) {
             throw new NotFoundException("Film with id=" + film.getId() + " not found");
         }
 
+        validateFilmReferences(film);
         return filmStorage.update(film);
     }
 
@@ -47,29 +52,56 @@ public class FilmService {
     }
 
     public void addLike(Integer filmId, Integer userId) {
-        Film film = getFilmById(filmId);
+        if (!filmStorage.existsById(filmId)) {
+            throw new NotFoundException("Film with id=" + filmId + " not found");
+        }
 
         if (!userStorage.existsById(userId)) {
             throw new NotFoundException("User with id=" + userId + " not found");
         }
 
-        film.getLikes().add(userId);
+        filmStorage.addLike(filmId, userId);
     }
 
     public void removeLike(Integer filmId, Integer userId) {
-        Film film = getFilmById(filmId);
+        if (!filmStorage.existsById(filmId)) {
+            throw new NotFoundException("Film with id=" + filmId + " not found");
+        }
 
         if (!userStorage.existsById(userId)) {
             throw new NotFoundException("User with id=" + userId + " not found");
         }
 
-        film.getLikes().remove(userId);
+        filmStorage.removeLike(filmId, userId);
     }
 
     public List<Film> getPopularFilms(int count) {
-        return filmStorage.findAll().stream()
-                .sorted(Comparator.comparingInt((Film film) -> film.getLikes().size()).reversed())
-                .limit(count)
-                .collect(Collectors.toList());
+        if (count <= 0) {
+            throw new ValidationException("Count must be positive");
+        }
+
+        return filmStorage.getPopularFilms(count);
+    }
+
+    private void validateFilmReferences(Film film) {
+        if (film.getMpa() != null && film.getMpa().getId() != null) {
+            if (!mpaStorage.existsById(film.getMpa().getId())) {
+                throw new NotFoundException("MPA rating with id=" + film.getMpa().getId() + " not found");
+            }
+        }
+
+        if (film.getGenres() == null) {
+            return;
+        }
+
+        for (Genre genre : film.getGenres()) {
+            if (genre == null || genre.getId() == null) {
+                throw new ValidationException("Genre id must not be null");
+            }
+
+            if (!genreStorage.existsById(genre.getId())) {
+                throw new NotFoundException("Genre with id=" + genre.getId() + " not found");
+            }
+        }
     }
 }
