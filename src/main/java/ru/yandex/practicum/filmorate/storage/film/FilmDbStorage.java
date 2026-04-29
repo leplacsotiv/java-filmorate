@@ -53,7 +53,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Collection<Film> findAll() {
         String sql = """
-                SELECT 
+                SELECT
                     f.film_id,
                     f.name,
                     f.description,
@@ -139,7 +139,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Film getById(Integer id) {
         String sql = """
-                SELECT 
+                SELECT
                     f.film_id,
                     f.name,
                     f.description,
@@ -200,7 +200,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> getPopularFilms(int count) {
         String sql = """
-            SELECT 
+            SELECT
                 f.film_id,
                 f.name,
                 f.description,
@@ -212,7 +212,7 @@ public class FilmDbStorage implements FilmStorage {
             FROM films AS f
             LEFT JOIN mpa_ratings AS m ON f.mpa_rating_id = m.mpa_rating_id
             LEFT JOIN likes AS l ON f.film_id = l.film_id
-            GROUP BY 
+            GROUP BY
                 f.film_id,
                 f.name,
                 f.description,
@@ -263,7 +263,7 @@ public class FilmDbStorage implements FilmStorage {
 
     private void loadGenres(Film film) {
         String sql = """
-                SELECT 
+                SELECT
                     g.genre_id,
                     g.name
                 FROM genres AS g
