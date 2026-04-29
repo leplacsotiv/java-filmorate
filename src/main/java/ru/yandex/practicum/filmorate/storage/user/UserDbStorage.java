@@ -127,7 +127,7 @@ public class UserDbStorage implements UserStorage {
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, id);
         return count != null && count > 0;
     }
-    
+
     @Override
     public void addFriend(Integer userId, Integer friendId) {
         String sql = """
