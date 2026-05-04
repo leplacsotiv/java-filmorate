@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import java.util.LinkedHashSet;
 
 import java.util.Collection;
 import java.util.List;
@@ -28,6 +29,7 @@ public class FilmService {
     }
 
     public Film createFilm(Film film) {
+        prepareFilm(film);
         validateFilmReferences(film);
         return filmStorage.create(film);
     }
@@ -37,6 +39,7 @@ public class FilmService {
             throw new NotFoundException("Film with id=" + film.getId() + " not found");
         }
 
+        prepareFilm(film);
         validateFilmReferences(film);
         return filmStorage.update(film);
     }
@@ -76,10 +79,6 @@ public class FilmService {
     }
 
     public List<Film> getPopularFilms(int count) {
-        if (count <= 0) {
-            throw new ValidationException("Count must be positive");
-        }
-
         return filmStorage.getPopularFilms(count);
     }
 
@@ -90,10 +89,6 @@ public class FilmService {
             }
         }
 
-        if (film.getGenres() == null) {
-            return;
-        }
-
         for (Genre genre : film.getGenres()) {
             if (genre == null || genre.getId() == null) {
                 throw new ValidationException("Genre id must not be null");
@@ -102,6 +97,12 @@ public class FilmService {
             if (!genreStorage.existsById(genre.getId())) {
                 throw new NotFoundException("Genre with id=" + genre.getId() + " not found");
             }
+        }
+    }
+
+    private void prepareFilm(Film film) {
+        if (film.getGenres() == null) {
+            film.setGenres(new LinkedHashSet<>());
         }
     }
 }

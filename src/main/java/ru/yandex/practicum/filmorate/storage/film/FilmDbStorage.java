@@ -14,10 +14,8 @@ import ru.yandex.practicum.filmorate.model.Mpa;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Primary
@@ -67,7 +65,7 @@ public class FilmDbStorage implements FilmStorage {
                 """;
 
         List<Film> films = jdbcTemplate.query(sql, filmRowMapper);
-        films.forEach(this::loadGenres);
+        loadGenresForFilms(films);
         return films;
     }
 
@@ -225,7 +223,7 @@ public class FilmDbStorage implements FilmStorage {
             """;
 
         List<Film> films = jdbcTemplate.query(sql, filmRowMapper, count);
-        films.forEach(this::loadGenres);
+        loadGenresForFilms(films);
         return films;
     }
 
@@ -280,5 +278,45 @@ public class FilmDbStorage implements FilmStorage {
         }, film.getId());
 
         film.setGenres(new LinkedHashSet<>(genres));
+    }
+
+    private void loadGenresForFilms(List<Film> films) {
+        if (films.isEmpty()) {
+            return;
+        }
+
+        films.forEach(film -> film.setGenres(new LinkedHashSet<>()));
+
+        String placeholders = films.stream()
+                .map(film -> "?")
+                .collect(Collectors.joining(", "));
+
+        String sql = """
+            SELECT 
+                fg.film_id,
+                g.genre_id,
+                g.name
+            FROM film_genres AS fg
+            JOIN genres AS g ON fg.genre_id = g.genre_id
+            WHERE fg.film_id IN (%s)
+            ORDER BY fg.film_id, g.genre_id
+            """.formatted(placeholders);
+
+        Map<Integer, Film> filmsById = films.stream()
+                .collect(Collectors.toMap(Film::getId, film -> film));
+
+        Object[] filmIds = films.stream()
+                .map(Film::getId)
+                .toArray();
+
+        jdbcTemplate.query(sql, rs -> {
+            Integer filmId = rs.getInt("film_id");
+
+            Genre genre = new Genre();
+            genre.setId(rs.getInt("genre_id"));
+            genre.setName(rs.getString("name"));
+
+            filmsById.get(filmId).getGenres().add(genre);
+        }, filmIds);
     }
 }

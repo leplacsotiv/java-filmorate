@@ -16,11 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.validation.UpdateValidationGroup;
-
+import jakarta.validation.constraints.Positive;
 import java.util.Collection;
 import java.util.List;
 
 @Slf4j
+@Validated
 @RestController
 @RequestMapping("/films")
 @RequiredArgsConstructor
@@ -67,7 +68,8 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10") int count) {
+    public List<Film> getPopularFilms(@Positive(message = "Count must be positive")
+                                      @RequestParam(defaultValue = "10") int count) {
         List<Film> popularFilms = filmService.getPopularFilms(count);
         log.info("Received {} popular films", count);
         return popularFilms;

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import jakarta.validation.ConstraintViolationException;
 
 import java.util.Map;
 
@@ -40,6 +41,20 @@ public class ErrorHandler {
         log.warn("Validation error: {}", errorMessage);
         return Map.of("error", errorMessage);
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleConstraintViolationException(ConstraintViolationException e) {
+        String errorMessage = e.getConstraintViolations()
+                .stream()
+                .findFirst()
+                .map(violation -> violation.getMessage())
+                .orElse("Validation error");
+
+        log.warn("Validation error: {}", errorMessage);
+        return Map.of("error", errorMessage);
+    }
+
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
